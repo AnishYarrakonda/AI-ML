@@ -1,0 +1,32 @@
+,brand,model,year,price
+idx,brand,model,year,price
+0,Tesla,Model 3,2018,14000
+1,Ford,Mustang,2007,5000
+2,Toyota,Camry,2022,20500
+3,BMW,M5,2019,50000
+4,Honda,Civic,2020,12300
+5,Chevrolet,Malibu,2016,9800
+6,Nissan,Altima,2015,8700
+7,Audi,A4,2018,26500
+8,Hyundai,Elantra,2021,16200
+9,Kia,Optima,2019,14500
+10,Mercedes,C300,2017,28900
+11,Subaru,Outback,2020,22300
+12,Volkswagen,Jetta,2016,9100
+13,Ford,F-150,2018,32000
+14,Toyota,Corolla,2014,7200
+15,Honda,Accord,2021,24500
+16,Tesla,Model Y,2022,48000
+17,BMW,330i,2016,21500
+18,Chevrolet,Impala,2015,8900
+19,Nissan,Rogue,2020,19800
+20,Audi,Q5,2019,37500
+21,Hyundai,Tucson,2017,13400
+22,Kia,Sorento,2018,17900
+23,Mercedes,GLA,2020,33500
+24,Subaru,Forester,2019,21200
+25,Toyota,RAV4,2021,26800
+26,Ford,Escape,2016,10400
+27,Volkswagen,Tiguan,2020,25100
+28,Honda,CR-V,2018,19700
+29,Chevrolet,Tahoe,2017,38900
