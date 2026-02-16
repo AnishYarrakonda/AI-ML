@@ -1,150 +1,41 @@
 from __future__ import annotations
 
-from collections import deque
-from dataclasses import dataclass
-import random
 import tkinter as tk
 from tkinter import messagebox
 
-
-# Boundaries for user-adjustable settings
-MIN_GRID_SIZE = 8
-MAX_GRID_SIZE = 60
-MIN_CELL_SIZE = 12
-MAX_CELL_SIZE = 48
-MIN_SPEED_MS = 40
-MAX_SPEED_MS = 500
-MIN_APPLES = 1
-MAX_APPLES = 100
-MIN_INITIAL_LENGTH = 2
-
-
-@dataclass
-class SnakeConfig:
-    grid_size: int = 20
-    cell_size: int = 28
-    speed_ms: int = 100
-    apples: int = 3
-    initial_length: int = 3
-    wrap_walls: bool = False
-    show_grid: bool = True
-
-
-class SnakeGame:
-    def __init__(self, config: SnakeConfig) -> None:
-        self.config = config
-        self.reset()
-
-    def reset(self) -> None:
-        size = self.config.grid_size
-        self.grid = [[0 for _ in range(size)] for _ in range(size)]
-        self.snake: deque[tuple[int, int]] = deque()
-        self.snake_set: set[tuple[int, int]] = set()
-        self.apples: set[tuple[int, int]] = set()
-        self.free_tiles = {(x, y) for x in range(size) for y in range(size)}
-        self.direction = "right"
-        self.pending_direction = "right"
-        self.running = False
-        self.alive = True
-        self.score = 0
-
-        self.spawn_snake(self.config.initial_length)
-        self.replenish_apples()
-
-    def spawn_snake(self, length: int) -> None:
-        size = self.config.grid_size
-        center_y = size // 2
-        center_x = size // 2
-
-        positions = [(center_x - i, center_y) for i in range(length)]
-        min_x = min(p[0] for p in positions)
-        max_x = max(p[0] for p in positions)
-
-        if min_x < 0 or max_x >= size:
-            tail_x = (size - length) // 2
-            head_x = tail_x + length - 1
-            positions = [(head_x - i, center_y) for i in range(length)]
-
-        for x, y in positions:
-            self.snake.append((x, y))
-            self.snake_set.add((x, y))
-            self.free_tiles.discard((x, y))
-            self.grid[y][x] = 1
-
-    def _next_head(self, direction: str) -> tuple[int, int]:
-        head_x, head_y = self.snake[0]
-        if direction == "up":
-            return head_x, head_y - 1
-        if direction == "down":
-            return head_x, head_y + 1
-        if direction == "left":
-            return head_x - 1, head_y
-        return head_x + 1, head_y
-
-    def _in_bounds(self, x: int, y: int) -> bool:
-        size = self.config.grid_size
-        return 0 <= x < size and 0 <= y < size
-
-    def move(self) -> bool:
-        if not self.alive:
-            return False
-
-        self.direction = self.pending_direction
-        new_x, new_y = self._next_head(self.direction)
-
-        if self.config.wrap_walls:
-            size = self.config.grid_size
-            new_x %= size
-            new_y %= size
-        elif not self._in_bounds(new_x, new_y):
-            self.alive = False
-            return False
-
-        new_head = (new_x, new_y)
-        growing = new_head in self.apples
-        tail = self.snake[-1]
-
-        if new_head in self.snake_set and not (not growing and new_head == tail):
-            self.alive = False
-            return False
-
-        self.snake.appendleft(new_head)
-        self.snake_set.add(new_head)
-        self.free_tiles.discard(new_head)
-
-        if growing:
-            self.apples.discard(new_head)
-            self.score += 1
-        else:
-            old_tail = self.snake.pop()
-            self.snake_set.discard(old_tail)
-            self.free_tiles.add(old_tail)
-
-        self.replenish_apples()
-        return True
-
-    def replenish_apples(self) -> None:
-        target = min(self.config.apples, len(self.free_tiles))
-        while len(self.apples) < target and self.free_tiles:
-            pos = random.choice(tuple(self.free_tiles))
-            self.apples.add(pos)
-            self.free_tiles.discard(pos)
-
-    def queue_direction(self, new_direction: str) -> None:
-        opposites = {
-            "up": "down",
-            "down": "up",
-            "left": "right",
-            "right": "left",
-        }
-        if new_direction not in opposites:
-            return
-        if len(self.snake) > 1 and opposites[new_direction] == self.direction:
-            return
-        self.pending_direction = new_direction
+# Support both package imports and running this file directly.
+try:
+    from .game_logic import (
+        MAX_APPLES,
+        MAX_CELL_SIZE,
+        MAX_GRID_SIZE,
+        MAX_SPEED_MS,
+        MIN_APPLES,
+        MIN_CELL_SIZE,
+        MIN_GRID_SIZE,
+        MIN_INITIAL_LENGTH,
+        MIN_SPEED_MS,
+        SnakeConfig,
+        SnakeGame,
+    )
+except ImportError:
+    from game_logic import (
+        MAX_APPLES,
+        MAX_CELL_SIZE,
+        MAX_GRID_SIZE,
+        MAX_SPEED_MS,
+        MIN_APPLES,
+        MIN_CELL_SIZE,
+        MIN_GRID_SIZE,
+        MIN_INITIAL_LENGTH,
+        MIN_SPEED_MS,
+        SnakeConfig,
+        SnakeGame,
+    )
 
 
 class SnakeApp:
+    """Tkinter presentation layer for SnakeGame."""
     BG = "#101418"
     BOARD_BG = "#1c2229"
     SIDEBAR_BG = "#0f1720"
@@ -164,7 +55,7 @@ class SnakeApp:
 
         self.config = SnakeConfig()
         self.game = SnakeGame(self.config)
-        self.after_id: str | None = None
+        self.after_id: str | None = None  # Tkinter timer id for the game loop
 
         self._build_layout()
         self._bind_keys()
@@ -172,6 +63,7 @@ class SnakeApp:
         self.draw()
 
     def _build_layout(self) -> None:
+        """Create game canvas + right sidebar panels."""
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
 
@@ -216,6 +108,7 @@ class SnakeApp:
         self._build_buttons()
 
     def _build_status(self) -> None:
+        """Top sidebar section with live score/length/run-state labels."""
         frame = tk.LabelFrame(
             self.sidebar,
             text="Status",
@@ -242,6 +135,7 @@ class SnakeApp:
             ).pack(fill="x", padx=10, pady=4)
 
     def _build_controls(self) -> None:
+        """Settings section for values that rebuild the game state."""
         frame = tk.LabelFrame(
             self.sidebar,
             text="Settings",
@@ -306,6 +200,7 @@ class SnakeApp:
         hint.pack(anchor="w", padx=10, pady=(0, 10))
 
     def _add_labeled_spinbox(self, parent: tk.Widget, label: str, var: tk.StringVar) -> None:
+        """Small helper to render one setting row."""
         row = tk.Frame(parent, bg=self.SIDEBAR_BG)
         row.pack(fill="x", padx=10, pady=4)
 
@@ -333,6 +228,7 @@ class SnakeApp:
         spin.pack(side="right")
 
     def _build_buttons(self) -> None:
+        """Action buttons for start/pause/reset/apply."""
         frame = tk.Frame(self.sidebar, bg=self.SIDEBAR_BG)
         frame.pack(fill="x", padx=16, pady=(0, 10))
 
@@ -375,6 +271,7 @@ class SnakeApp:
         )
 
     def _bind_keys(self) -> None:
+        """Bind movement controls and spacebar pause."""
         self.root.bind("<Up>", lambda _e: self.game.queue_direction("up"))
         self.root.bind("<Down>", lambda _e: self.game.queue_direction("down"))
         self.root.bind("<Left>", lambda _e: self.game.queue_direction("left"))
@@ -386,6 +283,7 @@ class SnakeApp:
         self.root.bind("<space>", lambda _e: self.toggle_pause())
 
     def _parse_int(self, raw: str, low: int, high: int, label: str) -> int:
+        """Parse and clamp-check integer settings with a clear error message."""
         try:
             value = int(raw)
         except ValueError:
@@ -395,6 +293,7 @@ class SnakeApp:
         return value
 
     def apply_settings(self) -> None:
+        """Validate sidebar values, then rebuild the game with new config."""
         try:
             grid_size = self._parse_int(self.grid_size_var.get(), MIN_GRID_SIZE, MAX_GRID_SIZE, "Grid size")
             cell_size = self._parse_int(self.cell_size_var.get(), MIN_CELL_SIZE, MAX_CELL_SIZE, "Cell size")
@@ -410,6 +309,7 @@ class SnakeApp:
             messagebox.showerror("Invalid Setting", str(exc))
             return
 
+        # Keep at least one free tile for movement/spawns.
         max_apples_by_tiles = max(1, grid_size * grid_size - initial_length)
         if apples > max_apples_by_tiles:
             messagebox.showerror(
@@ -437,15 +337,18 @@ class SnakeApp:
         self.draw()
 
     def _apply_canvas_size(self) -> None:
+        """Resize board canvas to match current grid + tile size."""
         side_pixels = self.config.grid_size * self.config.cell_size
         self.canvas.configure(width=side_pixels, height=side_pixels)
 
     def _cancel_loop(self) -> None:
+        """Cancel scheduled tick callback if one exists."""
         if self.after_id is not None:
             self.root.after_cancel(self.after_id)
             self.after_id = None
 
     def start_game(self) -> None:
+        """Start or resume live ticking from current state."""
         if not self.game.alive:
             self.game.reset()
         self.game.running = True
@@ -453,6 +356,7 @@ class SnakeApp:
         self.tick()
 
     def toggle_pause(self) -> None:
+        """Pause/resume without losing current board state."""
         if not self.game.alive:
             return
         self.game.running = not self.game.running
@@ -464,12 +368,14 @@ class SnakeApp:
             self._cancel_loop()
 
     def reset_game(self) -> None:
+        """Reset state using current config values."""
         self._cancel_loop()
         self.game = SnakeGame(self.config)
         self.state_var.set("State: Ready")
         self.draw()
 
     def tick(self) -> None:
+        """Single frame of the game loop; reschedules itself while running."""
         self._cancel_loop()
         if not self.game.running:
             return
@@ -484,11 +390,13 @@ class SnakeApp:
         self.after_id = self.root.after(self.config.speed_ms, self.tick)
 
     def draw(self) -> None:
+        """Render board, apples, snake, status labels, and game-over overlay."""
         self.canvas.delete("all")
         size = self.config.grid_size
         cell = self.config.cell_size
 
         if self.config.show_grid:
+            # Optional guide lines to make large boards easier to read.
             for i in range(size + 1):
                 pos = i * cell
                 self.canvas.create_line(0, pos, size * cell, pos, fill=self.GRID_COLOR)
@@ -528,8 +436,9 @@ class SnakeApp:
 
 
 def main() -> None:
+    """Launch the desktop app."""
     root = tk.Tk()
-    app = SnakeApp(root)
+    SnakeApp(root)
     root.mainloop()
 
 
