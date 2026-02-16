@@ -15,8 +15,8 @@ LOCAL_MPLCONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".mpl
 os.makedirs(LOCAL_MPLCONFIG, exist_ok=True)
 os.environ.setdefault("MPLCONFIGDIR", LOCAL_MPLCONFIG)
 
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt # type: ignore
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg # type: ignore
 
 import numpy as np
 import torch
@@ -278,7 +278,7 @@ def run_episode(
         if done:
             break
 
-    return len(game.snake), total_reward, step + 1
+    return len(game.snake), total_reward, step + 1 # type: ignore
 
 
 def train_offline(
@@ -315,12 +315,12 @@ def train_offline(
 
         if show_plot and (ep == 1 or ep % 10 == 0 or ep == cfg.episodes):
             x = np.arange(1, len(scores) + 1)
-            current_line.set_data(x, scores)
-            avg_line.set_data(x, avg_scores)
-            ax.relim()
-            ax.autoscale_view()
-            fig.canvas.draw_idle()
-            fig.canvas.flush_events()
+            current_line.set_data(x, scores) # type: ignore
+            avg_line.set_data(x, avg_scores) # type: ignore
+            ax.relim() # type: ignore
+            ax.autoscale_view() # type: ignore
+            fig.canvas.draw_idle() # type: ignore
+            fig.canvas.flush_events() # type: ignore
             plt.pause(0.001)
 
         if ep % 50 == 0:
@@ -422,7 +422,7 @@ class TrainingDashboard:
         self.canvas = tk.Canvas(left, bg="#1c2229", width=700, height=700, highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
 
-        fig = plt.Figure(figsize=(7, 5), dpi=100)
+        fig = plt.Figure(figsize=(7, 5), dpi=100) # type: ignore
         self.ax = fig.add_subplot(111)
         self.ax.set_title("Training Progress")
         self.ax.set_xlabel("Episode")
@@ -544,7 +544,7 @@ class TrainingDashboard:
 
                 if mtype == "step":
                     self.last_snapshot = msg["snapshot"]
-                    self._draw_snapshot(self.last_snapshot)
+                    self._draw_snapshot(self.last_snapshot) # type: ignore
 
                 elif mtype == "episode":
                     score = float(msg["score"])
