@@ -362,5 +362,5 @@ if __name__ == "__main__":
             else:    
                 play_against_cpu(q_vals)
         elif match_up == '2':
-            secs = float(input("Enter the delay between CPU moves in seconds (ex: 1.5): "))
-            play_cpu_vs_cpu(q_vals, seconds=secs)
+            seconds = float(input("Enter the delay between CPU moves in seconds (ex: 1.5): "))
+            play_cpu_vs_cpu(q_vals, seconds=seconds)
